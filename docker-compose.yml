@@ -1,0 +1,58 @@
+services:
+  postgres_app:
+    image: postgres:16
+    container_name: nexow_postgres_app
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_APP_DB}
+      POSTGRES_USER: ${POSTGRES_APP_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_APP_PASSWORD}
+    ports:
+      - "${POSTGRES_APP_PORT}:5432"
+    volumes:
+      - postgres_app_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: nexow_timescaledb
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${TIMESCALEDB_DB}
+      POSTGRES_USER: ${TIMESCALEDB_USER}
+      POSTGRES_PASSWORD: ${TIMESCALEDB_PASSWORD}
+    ports:
+      - "${TIMESCALEDB_PORT}:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./docker/initdb-timescale:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: nexow_qdrant
+    restart: unless-stopped
+    environment:
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY}
+    ports:
+      - "${QDRANT_PORT}:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:6333/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_app_data:
+  timescale_data:
+  qdrant_data:
