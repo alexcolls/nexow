@@ -56,45 +56,83 @@ Required:
 git clone <repository-url>
 cd nexow
 cp .env.sample .env
-# Edit .env with your configuration
+# Edit .env with your configuration (passwords, ports, etc.)
 ```
 
 2. **Install Rust dependencies** (builds workspace):
 ```bash
-cargo build --workspace
+cargo build --workspace --release
 ```
 
 3. **Install Node dependencies** (for station):
 ```bash
 cd station
-corepack enable
 yarn install
 cd ..
 ```
 
-4. **Start databases**:
+### Running with CLI (Recommended)
+
+The `nexow` CLI orchestrates all services for you:
+
 ```bash
+# 1. Verify prerequisites
+cargo run -p nexow -- check
+
+# 2. Start databases
 cargo run -p nexow -- db up
-# Or: docker compose up -d
+
+# 3. Start platform (server + station)
+cargo run -p nexow -- start
 ```
 
-5. **Run server** (in one terminal):
+The platform will be available at:
+- **Station UI**: http://127.0.0.1:3000
+- **API Server**: http://127.0.0.1:8080
+- **Health check**: http://127.0.0.1:8080/health
+
+**Stopping the platform**:
 ```bash
-cargo run -p nexow-server
+# Stop server and station only
+cargo run -p nexow -- stop
+
+# Stop everything including databases
+cargo run -p nexow -- stop --with-db
 ```
 
-6. **Run station** (in another terminal):
+### Manual Setup (Alternative)
+
+If you prefer to run services individually:
+
+1. **Start databases**:
+```bash
+docker compose up -d
+```
+
+2. **Run server** (in one terminal):
+```bash
+cargo run --release -p nexow-server
+```
+
+3. **Run station** (in another terminal):
 ```bash
 cd station
 yarn dev
 ```
 
-7. **Access the platform**:
-- Station UI: http://127.0.0.1:3000
-- API Server: http://127.0.0.1:8080
-- Health check: http://127.0.0.1:8080/health
+4. **Access the platform** at http://127.0.0.1:3000
 
 ### Quick Test
+
+#### Via Station UI (Recommended)
+
+1. Open http://127.0.0.1:3000 in your browser
+2. Navigate to **Simulate** page
+3. Configure parameters (symbols, bars, RF settings)
+4. Click **Start Simulation**
+5. Go to **Dashboard** to see real-time metrics and bars streaming
+
+#### Via API
 
 ```bash
 # Start a simulation via API
@@ -111,9 +149,24 @@ curl -X POST http://127.0.0.1:8080/api/sim/start \
     "starting_cash": 100000
   }'
 
-# Connect to WebSocket for live updates
-# ws://127.0.0.1:8080/ws/stream
+# Connect to WebSocket for live updates (use wscat or browser dev tools)
+wscat -c ws://127.0.0.1:8080/ws/stream
 ```
+
+#### Expected Results
+
+The simulation will:
+1. Generate 2000 synthetic bars for BTC-USD
+2. Train Random Forest model on 70% of the data
+3. Execute trades on remaining 30% test data
+4. Stream Bar and Metrics events via WebSocket
+5. Display final PnL, drawdown, win rate, and trade count
+
+**Dashboard** will show:
+- Live updates of latest metrics (PnL, Max Drawdown, Win Rate, Trades)
+- Latest bar data (symbol, close, high, low prices)
+- WebSocket connection status
+- Total bars and metrics received
 
 ## Configuration
 
@@ -188,13 +241,14 @@ cargo run -p nexow -- db status
 
 See [docs/TODO.md](docs/TODO.md) for the complete roadmap.
 
-### Phase 1: MVP (Current)
+### Phase 1: MVP ✅ (Completed)
 - [x] Rust engine with synthetic data
 - [x] Random Forest ML strategy
 - [x] Axum server with WebSocket streaming
-- [x] Docker infrastructure
-- [ ] Nuxt Station SPA
-- [ ] CLI orchestrator
+- [x] Docker infrastructure (PostgreSQL, TimescaleDB, Qdrant)
+- [x] Nuxt 3 Station SPA (SSR disabled, Pinia, Tailwind)
+- [x] CLI orchestrator (start/stop/db/check)
+- [x] End-to-end simulation workflow
 
 ### Phase 2: Real Data
 - [ ] Broker/exchange connectivity (Interactive Brokers, Binance, etc.)
