@@ -1,6 +1,6 @@
-# Nexow
+# ⚡ [Nexow](https://nexow.io)
 
-**Open-source, low-latency trading platform for algorithmic trading**
+**[nexow.io](https://nexow.io) |  Open-source, low-latency trading platform for algorithmic quantitative development, testing, training, backtesting, risk management and full trading monitoring built-in Rust with a Python API for building and deploying bots fast.**
 
 Nexow is a professional trading framework built with Rust and Nuxt, designed for building, testing, and deploying algorithmic trading strategies across multiple asset classes.
 
